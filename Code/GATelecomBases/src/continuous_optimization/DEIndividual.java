@@ -1,0 +1,164 @@
+/*
+ * 		EGE DOĞAN DURSUN
+ * 		05170000006
+ * 
+ * 		CEM ÇORBACIOĞLU
+ * 		05130000242
+ * 
+ * 		EGE UNIVERSITY 
+ * 		FACULTY OF ENGINEERING
+ * 		COMPUTER ENGINEERING DEPARTMENT
+ * 		2019 - 2020 - SPRING
+ * 		EVOLUTIONARY COMPUTATION
+ * 		TERM PROJECT : BASE STATION LOCATING OPTIMIZATION
+ * 		DATE OF LATEST UPDATE : MAY 6, 2020 - TUESDAY
+ * 
+ */
+
+
+package continuous_optimization;
+
+import java.util.ArrayList;
+import java.util.Random;
+
+import model.Base;
+import model.BaseLocation;
+import model.Problem;
+
+public class DEIndividual implements Comparable<DEIndividual> {
+
+	
+	/*
+	 * 
+	 * THIS CLASS IS USED FOR DEFINING THE INDIVIDUAL OBJECT, WHICH IS THE MAIN POPULATION ACTOR IN DIFFERENTIAL EVOLUTION ALGORITHM
+	 * 
+	 */
+	
+	
+	private int id;
+	private Problem problem;
+	private ArrayList<Base> chromosome;
+	private Double fitness;
+	
+	private static int counter = 0;
+	
+	public DEIndividual(Problem problem) {
+		counter++;
+		this.id = counter;
+		this.problem = problem;
+		this.chromosome = randomizeChromosome();
+		this.fitness = 0.0;
+	}
+	
+	
+	//this method is used for randomizing the chromosome (base coordinates) of the individual on creation
+	public ArrayList<Base> randomizeChromosome(){
+		
+		Random r = new Random();
+		double x;
+		double y;
+		ArrayList<Base> bases = new ArrayList<Base>();
+		if(problem.getCity().getBaseLocationAmount() == 0) {
+			
+			for(int i = 0; i<problem.getCity().getBaseAmount(); i++) {
+				
+				//create random locations in a continous space if the city has no predefined base locations
+				x = problem.getCity().getWidth() * r.nextDouble();
+				y = problem.getCity().getHeight() * r.nextDouble();
+				Base base = new Base(x, y, problem.getCoverRadius());
+				bases.add(base);
+			}	
+			
+			return bases;
+		}
+		else {
+			
+			for(BaseLocation location  : problem.getBaseLocations()) {
+				location.setOccupied(false);
+			}
+			
+			int choice;
+			for(int i = 0; i<problem.getCity().getBaseAmount(); i++) {
+				
+				choice = r.nextInt(problem.getBaseLocations().size());
+				if(problem.getBaseLocations().get(choice).isOccupied() == true) {
+					i = i -1;
+					continue;
+				}
+				else {
+					
+					//select from predefined base locations if they exist
+					x = problem.getBaseLocations().get(choice).getX();
+					y = problem.getBaseLocations().get(choice).getY();
+					Base base = new Base(x, y, problem.getCoverRadius());
+					bases.add(base);
+					problem.getBaseLocations().get(choice).setOccupied(true);
+				}
+			}
+			
+			return bases;
+		}
+	}
+	
+	
+	//this method is used for printing the chromosome information (base coordintes) of the individual
+	public void showChromosome() {
+		System.out.println();
+		System.out.println("\n INDIVIDUAL BASE COORDINATES : ");
+		for(int i = 0; i<chromosome.size(); i++) {
+			Base base = chromosome.get(i);
+			System.out.print("Base "+i+" ("+
+								String.format("%.2f", base.getX())+
+								" / "+
+								String.format("%.2f", base.getY())+
+								") , ");
+		}
+		System.out.println();
+	}
+	
+	public static int getIndividualAmount() {
+		return counter;
+	}
+
+	public Problem getProblem() {
+		return problem;
+	}
+
+	public void setProblem(Problem problem) {
+		this.problem = problem;
+	}
+
+	public ArrayList<Base> getChromosome() {
+		return chromosome;
+	}
+
+	public void setChromosome(ArrayList<Base> chromosome) {
+		this.chromosome = chromosome;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public Double getFitness() {
+		return fitness;
+	}
+
+	public void setFitness(Double fitness) {
+		this.fitness = fitness;
+	}
+
+	@Override
+	public int compareTo(DEIndividual o) {
+		
+		if (getFitness() == 0 || o.getFitness() == 0) {
+			return 0;
+		}
+		
+		return getFitness().compareTo(o.getFitness());
+	}
+}
